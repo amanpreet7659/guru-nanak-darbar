@@ -13,6 +13,7 @@ import { useState } from "react";
 /* The following line can be included in your src/index.js or App.js file */
 import "bootstrap/dist/css/bootstrap.min.css";
 import TopCarousel from "./components/TopCarousel/crousel";
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 const App = () => {
   const [playState, setPlayState] = useState(false);
@@ -35,6 +36,7 @@ const App = () => {
         <Footer />
       </div>
       <VideoPlayer playState={playState} setPlayState={setPlayState} />
+      <SpeedInsights />
     </div>
   );
 };
