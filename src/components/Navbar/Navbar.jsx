@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import "./Navbar.css";
-// import logo from "../../assets/logo.png";
-import logo from "../../assets/svg/logo.svg";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { Link } from "react-scroll";
 import menu_icon from "../../assets/menu-icon.png";
 import Logo from "../../assets/svg/logo";
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const [sticky, setSticky] = useState(false);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ const Navbar = () => {
       <Logo height="100px" width="500px" />
       <ul className={mobileMenu ? "" : "hide-mobile-menu"}>
         <li>
-          <Link to="main" smooth={true} offset={0} duration={500}>
+          <Link to="main" smooth={true} offset={0} duration={500} onClick={()=>{navigate("/")}}>
             Home
           </Link>
         </li>
@@ -47,18 +47,18 @@ const Navbar = () => {
             Campus
           </Link>
         </li> */}
-        {/* <li>
-          <Link to="testimonials" smooth={true} offset={-260} duration={500}>
-            Testimonials
-          </Link>
-        </li> */}
+        <li>
+          <RouterLink to="/waheguru-simran/register">
+            Registration 2026-27
+          </RouterLink>
+        </li>
         <li>
           <Link
             to="contact"
             smooth={true}
             offset={-260}
             duration={500}
-            className="actionbtn"
+            // className="actionbtn"
           >
             Contact Us
           </Link>

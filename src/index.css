@@ -42,8 +42,12 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-decoration: none;
 }
-.actionbtn {
+video {
+  height: 100%;
+}
+.actionbtn:hover {
   background-color: var(--B);
   color: var(--text-color);
   border-radius: 10px;
@@ -78,6 +82,11 @@ a {
   padding-bottom: 1.25rem;
   color: #fff;
   text-align: center;
+}
+
+.own-slide-li {
+  list-style: none;
+  width: 100%;
 }
 
 /* =============== Media query============== */

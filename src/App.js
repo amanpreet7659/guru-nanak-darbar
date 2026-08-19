@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Navbar from "./components/Navbar/Navbar";
 import Main from "./components/Main/Main";
 import Programs from "./components/Programs/Programs";
@@ -13,28 +13,53 @@ import { useState } from "react";
 /* The following line can be included in your src/index.js or App.js file */
 import "bootstrap/dist/css/bootstrap.min.css";
 import TopCarousel from "./components/TopCarousel/crousel";
-import { SpeedInsights } from "@vercel/speed-insights/react"
+import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Route, Routes } from "react-router-dom";
+import WaheguruSimranRegistration from "./components/Register/register";
+import Layout from "./components/Layout/layout";
 
 const App = () => {
   const [playState, setPlayState] = useState(false);
+  const [sticky, setSticky] = useState(false);
 
+  useEffect(() => {
+    window.addEventListener("scroll", () => {
+      window.scrollY > 50 ? setSticky(true) : setSticky(false);
+    });
+  }, []);
+  
   return (
-    <div>
-      <Navbar />
-      {/* <Main />   */}
-      <TopCarousel />
-      <div className="maincontainer">
-        <Title subTitle="Our PROGRAM" title="What we Offer" />
-        <Programs />
-        <About setPlayState={setPlayState} />
-        <Title subTitle="Gallery" title="Campus Photos" />
-        <Campus />
-        <Title subTitle="TESTIMONIALS" title="What Student Says" />
-        <Testimonials />
-        <Title subTitle="Contact Us" title="Get in Touch" />
-        <Contact />
-        <Footer />
-      </div>
+    <div className="main">
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Layout showcontact={true}>
+              <div className="maincontainer">
+                <TopCarousel />
+                <Title
+                  subTitle="Our PROGRAM"
+                  title="Learn, Remember & Inspire"
+                />
+                <Programs />
+                <About setPlayState={setPlayState} />
+                <Title subTitle="Gallery" title="Glimpses of Sikh Heritage" />
+                <Campus />
+                <Title subTitle="TESTIMONIALS" title="What Our Sangat Says" />
+                <Testimonials />
+              </div>
+            </Layout>
+          }
+        />
+        <Route
+          path="/waheguru-simran/register"
+          element={
+            <Layout>
+              <WaheguruSimranRegistration />
+            </Layout>
+          }
+        />
+      </Routes>
       <VideoPlayer playState={playState} setPlayState={setPlayState} />
       <SpeedInsights />
     </div>
