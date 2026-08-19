@@ -1,6 +1,8 @@
 import clientPromise from "../../lib/mongodb";
 import bcrypt from "bcryptjs";
 import { createAdminToken } from "../../lib/adminAuth";
+import dotenv from "dotenv";
+dotenv.config();
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -13,7 +15,9 @@ export default async function handler(req, res) {
   try {
     const { username, password } = req.body || {};
 
-    if (!username?.trim()) {
+    const loginValue = String(username || "").trim();
+
+    if (!loginValue) {
       return res.status(400).json({
         success: false,
         message: "Username is required.",
@@ -31,16 +35,18 @@ export default async function handler(req, res) {
 
     const db = client.db("gurdwara");
 
-    const admin = await db.collection("admin_users").findOne({
-      $or: [
-        {
-          username: username.trim(),
-        },
-        {
-          email: username.trim().toLowerCase(),
-        },
-      ],
-    });
+    const admin = await db
+      .collection("admin_users")
+      .findOne({
+        $or: [
+          {
+            username: loginValue,
+          },
+          {
+            email: loginValue.toLowerCase(),
+          },
+        ],
+      });
 
     if (!admin) {
       return res.status(401).json({
@@ -56,6 +62,13 @@ export default async function handler(req, res) {
       });
     }
 
+    if (!admin.password_hash) {
+      return res.status(500).json({
+        success: false,
+        message: "Admin password is not configured.",
+      });
+    }
+
     const passwordMatch = await bcrypt.compare(
       password,
       admin.password_hash
@@ -68,26 +81,46 @@ export default async function handler(req, res) {
       });
     }
 
-    const token = createAdminToken(admin);
+    // IMPORTANT:
+    // Never put the complete MongoDB admin document
+    // inside the JWT/cookie.
+    const tokenPayload = {
+      id: admin._id.toString(),
+      username: admin.username,
+      role: admin.role || "Admin",
+    };
 
-    res.setHeader(
-      "Set-Cookie",
-      `admin_token=${encodeURIComponent(
-        token
-      )}; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax${
-        process.env.NODE_ENV === "production" ? "; Secure" : ""
-      }`
-    );
+    const token = createAdminToken(tokenPayload);
+
+    if (!token) {
+      throw new Error("Failed to create admin token.");
+    }
+
+    const isProduction =
+      process.env.NODE_ENV === "production";
+
+    const cookie = [
+      `admin_token=${encodeURIComponent(token)}`,
+      "HttpOnly",
+      "Path=/",
+      "Max-Age=86400",
+      "SameSite=Lax",
+      isProduction ? "Secure" : "",
+    ]
+      .filter(Boolean)
+      .join("; ");
+
+    res.setHeader("Set-Cookie", cookie);
 
     return res.status(200).json({
       success: true,
       message: "Login successful.",
       data: {
         id: admin._id,
-        name: admin.name,
+        name: admin.name || "",
         username: admin.username,
-        email: admin.email,
-        role: admin.role,
+        email: admin.email || "",
+        role: admin.role || "Admin",
       },
     });
   } catch (error) {
