@@ -28,7 +28,15 @@ const Navbar = () => {
       <Logo height="100px" width="500px" />
       <ul className={mobileMenu ? "" : "hide-mobile-menu"}>
         <li>
-          <Link to="main" smooth={true} offset={0} duration={500} onClick={()=>{navigate("/")}}>
+          <Link
+            to="main"
+            smooth={true}
+            offset={0}
+            duration={500}
+            onClick={() => {
+              navigate("/");
+            }}
+          >
             Home
           </Link>
         </li>
@@ -62,6 +70,11 @@ const Navbar = () => {
           >
             Contact Us
           </Link>
+        </li>
+        <li>
+          <RouterLink to="/admin/login">
+            Admin Login
+          </RouterLink>
         </li>
       </ul>
       <img src={menu_icon} alt="" className="menu-icon" onClick={toggleMenu} />

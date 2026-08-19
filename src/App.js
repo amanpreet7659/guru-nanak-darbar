@@ -13,10 +13,15 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Route, Routes } from "react-router-dom";
 import WaheguruSimranRegistration from "./components/Register/register";
 import Layout from "./components/Layout/layout";
+import AdminLogin from "./pages/Admin/AdminLogin";
+import ProtectedAdminRoute from "./pages/Admin/ProtectedAdminRoute";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import AdminApplications from "./pages/Admin/AdminApplications";
+import AdminApplicationView from "./pages/Admin/AdminApplicationView";
 
 const App = () => {
   const [playState, setPlayState] = useState(false);
-  
+
   return (
     <div className="main">
       <Routes>
@@ -46,6 +51,34 @@ const App = () => {
             <Layout>
               <WaheguruSimranRegistration />
             </Layout>
+          }
+        />
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedAdminRoute>
+              <AdminDashboard />
+            </ProtectedAdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/applications"
+          element={
+            <ProtectedAdminRoute>
+              <AdminApplications />
+            </ProtectedAdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/applications/:id"
+          element={
+            <ProtectedAdminRoute>
+              <AdminApplicationView />
+            </ProtectedAdminRoute>
           }
         />
       </Routes>
