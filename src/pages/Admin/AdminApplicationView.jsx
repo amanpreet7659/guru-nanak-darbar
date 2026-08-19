@@ -8,7 +8,7 @@ const AdminApplicationView = () => {
   const [application, setApplication] = useState(null);
   const [verifiedCount, setVerifiedCount] = useState("");
   const [loading, setLoading] = useState(true);
-  
+
   const fetchApplication = async () => {
     try {
       const response = await fetch(`/api/admin/applications/${id}`, {
@@ -42,6 +42,7 @@ const AdminApplicationView = () => {
 
   useEffect(() => {
     fetchApplication();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const approveApplication = async () => {

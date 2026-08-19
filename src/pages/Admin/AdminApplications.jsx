@@ -87,6 +87,7 @@ const AdminApplications = () => {
 
   useEffect(() => {
     fetchApplications();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
   const handleSearch = (e) => {
