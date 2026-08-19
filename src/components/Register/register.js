@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const initialForm = {
   program_year: new Date().getFullYear(),
@@ -18,24 +20,6 @@ const initialForm = {
   notes: "",
 };
 
-const mockSubmitWaheguruRegistration = async (payload) => {
-  const response = await fetch("/api/waheguru-simran/register", {
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json",
-    },
-
-    body: JSON.stringify(payload),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.message || "Registration failed");
-  }
-};
-
 const calculateTokens = (count) => {
   const value = Number(count) || 0;
   return Math.floor(value / 1000);
@@ -52,6 +36,7 @@ export default function WaheguruSimranRegistration() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [successData, setSuccessData] = useState(null);
+  const navigate = useNavigate();
 
   const estimatedTokens = useMemo(
     () => calculateTokens(form.submitted_count),
@@ -138,6 +123,46 @@ export default function WaheguruSimranRegistration() {
 
     setErrors({});
     setSuccessData(null);
+  };
+
+  const mockSubmitWaheguruRegistration = async (payload) => {
+    const response = await fetch("/api/waheguru-simran/register", {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      await Swal.fire({
+        icon: "success",
+        title: "Registration Successful!",
+        text:
+          data?.message ||
+          "Your Waheguru Simran registration has been submitted successfully.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#1f3c68",
+      });
+      resetForm();
+      navigate("/");
+    }
+
+    if (!response.ok) {
+      await Swal.fire({
+        icon: "error",
+        title: "Registration Failed!",
+        text:
+          data?.message ||
+          "There was an error submitting your Waheguru Simran registration.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#1f3c68",
+      });
+      throw new Error(data?.message || "Registration failed");
+    }
   };
 
   const handleSubmit = async (event) => {

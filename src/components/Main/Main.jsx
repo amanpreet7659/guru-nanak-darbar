@@ -1,5 +1,6 @@
 import React from "react";
 import "./Main.css";
+import "sweetalert2/dist/sweetalert2.min.css";
 
 const Main = () => {
   // const ownSlider = useRef();
