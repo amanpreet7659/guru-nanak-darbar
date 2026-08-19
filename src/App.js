@@ -1,13 +1,9 @@
-import React, { useEffect } from "react";
-import Navbar from "./components/Navbar/Navbar";
-import Main from "./components/Main/Main";
+import React from "react";
 import Programs from "./components/Programs/Programs";
 import Title from "./components/Title/Title";
 import About from "./components/About/About";
 import Campus from "./components/Campus/Campus";
 import Testimonials from "./components/Testimonials/Testimonials";
-import Contact from "./components/Contact/Contact";
-import Footer from "./components/Footer/Footer";
 import VideoPlayer from "./components/VideoPlayer/VideoPlayer";
 import { useState } from "react";
 /* The following line can be included in your src/index.js or App.js file */
@@ -20,13 +16,6 @@ import Layout from "./components/Layout/layout";
 
 const App = () => {
   const [playState, setPlayState] = useState(false);
-  const [sticky, setSticky] = useState(false);
-
-  useEffect(() => {
-    window.addEventListener("scroll", () => {
-      window.scrollY > 50 ? setSticky(true) : setSticky(false);
-    });
-  }, []);
   
   return (
     <div className="main">

@@ -1,29 +1,22 @@
-import React, { useRef } from "react";
+import React from "react";
 import "./Main.css";
-import dark_arrow from "../../assets/dark-arrow.png";
-// import "./Testimonials.css";
-import next_icon from "../../assets/next-icon.png";
-import back_icon from "../../assets/back-icon.png";
-import user_1 from "../../assets/user-1.png";
-import user_2 from "../../assets/user-2.png";
-import user_3 from "../../assets/user-3.png";
-import user_4 from "../../assets/user-4.png";
-const Main = () => {
-  const ownSlider = useRef();
-  let tx = 0;
 
-  const slideforward = () => {
-    if (tx > -50) {
-      tx -= 25;
-    }
-    ownSlider.current.style.transform = `translateX(${tx}%)`;
-  };
-  const slidebackward = () => {
-    if (tx < 0) {
-      tx += 25;
-    }
-    ownSlider.current.style.transform = `translateX(${tx}%)`;
-  };
+const Main = () => {
+  // const ownSlider = useRef();
+  // let tx = 0;
+
+  // const slideforward = () => {
+  //   if (tx > -50) {
+  //     tx -= 25;
+  //   }
+  //   ownSlider.current.style.transform = `translateX(${tx}%)`;
+  // };
+  // const slidebackward = () => {
+  //   if (tx < 0) {
+  //     tx += 25;
+  //   }
+  //   ownSlider.current.style.transform = `translateX(${tx}%)`;
+  // };
 
   return (
     <div className="main maincontainer">
