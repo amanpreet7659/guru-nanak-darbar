@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
+import AdminLayout from "./AdminLayout";
+import { useTranslation } from "../../i18n";
 
 const AdminApplicationView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation();
+  const isEditMode = location.pathname.endsWith("/edit");
   const [application, setApplication] = useState(null);
   const [verifiedCount, setVerifiedCount] = useState("");
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
   const fetchApplication = async () => {
     try {
@@ -27,7 +33,9 @@ const AdminApplicationView = () => {
         data.data.verified_count !== null &&
         data.data.verified_count !== undefined
       ) {
-        setVerifiedCount(data.data.verified_count);
+        setVerifiedCount(String(data.data.verified_count));
+      } else if (data.data.submitted_count != null) {
+        setVerifiedCount(String(data.data.submitted_count));
       }
     } catch (error) {
       Swal.fire({
@@ -42,327 +50,398 @@ const AdminApplicationView = () => {
 
   useEffect(() => {
     fetchApplication();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const approveApplication = async () => {
-    if (verifiedCount === "" || Number(verifiedCount) < 0) {
-      Swal.fire({
-        icon: "warning",
-        title: "Verified Count Required",
-        text: "Please enter the verified Waheguru count.",
-      });
-
-      return;
+  const updateStatus = async ({ status, notes }) => {
+    if (status === "Accepted") {
+      if (verifiedCount === "" || Number(verifiedCount) < 0) {
+        Swal.fire({
+          icon: "warning",
+          title: t("admin.verifiedCountRequired"),
+          text: t("admin.verifiedCountRequiredText"),
+        });
+        return;
+      }
     }
 
-    const tokens = Math.floor(Number(verifiedCount) / 1000);
+    const tokens =
+      status === "Accepted"
+        ? Math.floor(Number(verifiedCount) / 1000)
+        : undefined;
 
-    const confirmation = await Swal.fire({
-      icon: "question",
-      title: "Approve Application?",
-      html: `
-          <div>
-            <p><strong>Verified Count:</strong> ${verifiedCount}</p>
-            <p><strong>Tokens:</strong> ${tokens}</p>
-          </div>
-        `,
-      showCancelButton: true,
-      confirmButtonText: "Approve",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#198754",
-    });
-
-    if (!confirmation.isConfirmed) {
-      return;
-    }
+    setUpdating(true);
 
     try {
-      const response = await fetch(`/api/admin/applications/${id}/approve`, {
-        method: "POST",
+      const body = { status };
+
+      if (status === "Accepted") {
+        body.verified_count = Number(verifiedCount);
+        body.tokens_issued = tokens;
+      }
+
+      if (notes !== undefined) {
+        body.notes = notes;
+      }
+
+      const response = await fetch(`/api/admin/applications/${id}/status`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          verified_count: Number(verifiedCount),
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data?.message || "Approval failed.");
+        throw new Error(data?.message || t("admin.updateFailed"));
       }
 
       await Swal.fire({
         icon: "success",
-        title: "Approved",
-        text: data.message,
+        title: t("admin.updated"),
+        text: data.message || t("admin.applicationUpdated"),
       });
 
-      fetchApplication();
+      setApplication(data.data);
+
+      if (
+        data.data.verified_count !== null &&
+        data.data.verified_count !== undefined
+      ) {
+        setVerifiedCount(String(data.data.verified_count));
+      }
     } catch (error) {
       Swal.fire({
         icon: "error",
-        title: "Approval Failed",
+        title: t("admin.updateFailed"),
         text: error.message,
       });
+    } finally {
+      setUpdating(false);
     }
+  };
+
+  const acceptApplication = async () => {
+    const tokens = Math.floor(Number(verifiedCount) / 1000);
+
+    const confirmation = await Swal.fire({
+      icon: "question",
+      title:
+        application.status === "Accepted"
+          ? t("admin.updateAcceptedApplication")
+          : t("admin.acceptApplication"),
+      html: `
+        <div>
+          <p><strong>${t("admin.verifiedCountLabel")}:</strong> ${verifiedCount}</p>
+          <p><strong>${t("admin.tokensIssued")}:</strong> ${tokens}</p>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText:
+        application.status === "Accepted"
+          ? t("admin.saveChanges")
+          : t("admin.accept"),
+      cancelButtonText: t("admin.cancel"),
+      confirmButtonColor: "#198754",
+    });
+
+    if (!confirmation.isConfirmed) return;
+
+    await updateStatus({ status: "Accepted" });
   };
 
   const rejectApplication = async () => {
     const result = await Swal.fire({
       icon: "warning",
-      title: "Reject Application",
+      title:
+        application.status === "Accepted"
+          ? t("admin.rejectAcceptedApplication")
+          : t("admin.rejectApplication"),
       input: "textarea",
-      inputLabel: "Rejection Reason",
-      inputPlaceholder: "Enter rejection reason...",
+      inputLabel: t("admin.rejectionReason"),
+      inputPlaceholder: t("admin.enterRejectionReason"),
       showCancelButton: true,
-      confirmButtonText: "Reject",
+      confirmButtonText: t("admin.reject"),
+      cancelButtonText: t("admin.cancel"),
       confirmButtonColor: "#dc3545",
       inputValidator: (value) => {
         if (!value?.trim()) {
-          return "Rejection reason is required.";
+          return t("admin.rejectionReasonRequired");
         }
-
         return null;
       },
     });
 
-    if (!result.isConfirmed) {
-      return;
-    }
+    if (!result.isConfirmed) return;
 
-    try {
-      const response = await fetch(`/api/admin/applications/${id}/reject`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          reason: result.value,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data?.message || "Rejection failed.");
-      }
-
-      await Swal.fire({
-        icon: "success",
-        title: "Application Rejected",
-        text: data.message,
-      });
-
-      fetchApplication();
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Rejection Failed",
-        text: error.message,
-      });
-    }
+    await updateStatus({
+      status: "Rejected",
+      notes: result.value,
+    });
   };
 
   if (loading) {
-    return <div style={{ padding: "40px" }}>Loading...</div>;
+    return (
+      <AdminLayout title={t("admin.applications")}>
+        <div className="py-5 text-center">{t("common.loading")}</div>
+      </AdminLayout>
+    );
   }
 
   if (!application) {
-    return <div style={{ padding: "40px" }}>Application not found.</div>;
+    return (
+      <AdminLayout title={t("admin.applications")}>
+        <div className="py-5 text-center">
+          {t("admin.applicationNotFound")}
+        </div>
+      </AdminLayout>
+    );
   }
 
   const calculatedTokens =
     verifiedCount === "" ? 0 : Math.floor(Number(verifiedCount) / 1000);
 
+  const canManage =
+    isEditMode &&
+    ["Pending Verification", "Accepted", "Rejected"].includes(
+      application.status
+    );
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f5f7fb",
-        padding: "30px",
-      }}
+    <AdminLayout
+      title={
+        isEditMode
+          ? `${t("admin.applicationDetails")} · ${t("admin.edit")}`
+          : `${t("admin.applicationDetails")} · ${t("admin.view")}`
+      }
     >
-      <button onClick={() => navigate("/admin/applications")}>← Back</button>
+      <div className="d-flex flex-wrap gap-2 mb-3">
+        <button
+          type="button"
+          className="btn btn-outline-secondary"
+          onClick={() => navigate("/admin/applications")}
+        >
+          {t("admin.backToList")}
+        </button>
 
-      <div
-        style={{
-          background: "#fff",
-          padding: "30px",
-          marginTop: "20px",
-          borderRadius: "10px",
-        }}
-      >
-        <h2>Application Details</h2>
-
-        <hr />
-
-        <h3>Applicant Information</h3>
-
-        <p>
-          <strong>Registration ID:</strong> {application.registration_id}
-        </p>
-
-        <p>
-          <strong>Program Year:</strong> {application.program_year}
-        </p>
-
-        <p>
-          <strong>Full Name:</strong> {application.full_name}
-        </p>
-
-        <p>
-          <strong>Father / Husband Name:</strong>{" "}
-          {application.father_husband_name || "-"}
-        </p>
-
-        <p>
-          <strong>Mobile:</strong> {application.mobile_number}
-        </p>
-
-        <p>
-          <strong>WhatsApp:</strong> {application.whatsapp_number || "-"}
-        </p>
-
-        <p>
-          <strong>Email:</strong> {application.email || "-"}
-        </p>
-
-        <p>
-          <strong>Village / City:</strong> {application.village_city}
-        </p>
-
-        <p>
-          <strong>Address:</strong> {application.address || "-"}
-        </p>
-
-        <p>
-          <strong>Age:</strong> {application.age || "-"}
-        </p>
-
-        <p>
-          <strong>Gender:</strong> {application.gender || "-"}
-        </p>
-
-        <p>
-          <strong>Pincode:</strong> {application.pincode || "-"}
-        </p>
-
-        <hr />
-
-        <h3>Simran Information</h3>
-
-        <p>
-          <strong>Copies Submitted:</strong> {application.copies_submitted}
-        </p>
-
-        <p>
-          <strong>Submitted Waheguru Count:</strong>{" "}
-          {application.submitted_count}
-        </p>
-
-        <p>
-          <strong>Submission Date:</strong> {application.submission_date}
-        </p>
-
-        <hr />
-
-        <h3>Verification</h3>
-
-        <p>
-          <strong>Current Status:</strong> {application.status}
-        </p>
-
-        {application.status === "Pending Verification" ? (
-          <>
-            <div
-              style={{
-                marginTop: "20px",
-              }}
-            >
-              <label>Verified Waheguru Count</label>
-
-              <input
-                type="number"
-                min="0"
-                value={verifiedCount}
-                onChange={(e) => setVerifiedCount(e.target.value)}
-                style={{
-                  display: "block",
-                  marginTop: "8px",
-                  padding: "12px",
-                  width: "300px",
-                }}
-              />
-            </div>
-
-            <div
-              style={{
-                marginTop: "15px",
-              }}
-            >
-              <strong>Tokens Issued:</strong> {calculatedTokens}
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                marginTop: "25px",
-              }}
-            >
-              <button
-                onClick={approveApplication}
-                style={{
-                  padding: "12px 25px",
-                  background: "#198754",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "5px",
-                }}
-              >
-                Approve
-              </button>
-
-              <button
-                onClick={rejectApplication}
-                style={{
-                  padding: "12px 25px",
-                  background: "#dc3545",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "5px",
-                }}
-              >
-                Reject
-              </button>
-            </div>
-          </>
+        {isEditMode ? (
+          <button
+            type="button"
+            className="btn btn-outline-dark"
+            onClick={() => navigate(`/admin/applications/${id}`)}
+          >
+            <i className="bi bi-eye me-1" />
+            {t("admin.viewMode")}
+          </button>
         ) : (
-          <>
-            <p>
-              <strong>Verified Count:</strong>{" "}
-              {application.verified_count ?? "-"}
-            </p>
-
-            <p>
-              <strong>Tokens Issued:</strong> {application.tokens_issued ?? "-"}
-            </p>
-
-            {application.rejection_reason && (
-              <p>
-                <strong>Rejection Reason:</strong>{" "}
-                {application.rejection_reason}
-              </p>
-            )}
-          </>
+          <button
+            type="button"
+            className="btn btn-outline-primary"
+            onClick={() => navigate(`/admin/applications/${id}/edit`)}
+          >
+            <i className="bi bi-pencil-square me-1" />
+            {t("admin.editMode")}
+          </button>
         )}
       </div>
-    </div>
+
+      <div className="card border-0 shadow-sm">
+        <div className="card-body p-4 p-md-5">
+          <div className="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+            <div>
+              <h3 className="fw-bold mb-1">{application.full_name}</h3>
+              <div className="text-muted">
+                {application.registration_id} · {t("admin.programLabel")}{" "}
+                {application.program_year}
+              </div>
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              <span
+                className={`badge rounded-pill px-3 py-2 ${
+                  isEditMode ? "bg-primary" : "bg-secondary"
+                }`}
+              >
+                {isEditMode ? t("admin.editMode") : t("admin.viewMode")}
+              </span>
+              <span className="badge bg-dark rounded-pill px-3 py-2">
+                {application.status}
+              </span>
+            </div>
+          </div>
+
+          <div className="row g-4">
+            <div className="col-md-6">
+              <h5 className="fw-bold mb-3">{t("admin.applicantSection")}</h5>
+              <p>
+                <strong>{t("admin.mobile")}:</strong>{" "}
+                {application.mobile_number}
+              </p>
+              <p>
+                <strong>{t("admin.whatsapp")}:</strong>{" "}
+                {application.whatsapp_number || "-"}
+              </p>
+              <p>
+                <strong>{t("admin.email")}:</strong> {application.email || "-"}
+              </p>
+              <p>
+                <strong>{t("register.preferredLanguage")}:</strong>{" "}
+                {application.preferred_language === "pa"
+                  ? t("common.punjabi")
+                  : t("common.english")}
+              </p>
+              <p>
+                <strong>{t("admin.fatherHusband")}:</strong>{" "}
+                {application.father_husband_name || "-"}
+              </p>
+              <p>
+                <strong>{t("admin.villageCity")}:</strong>{" "}
+                {application.village_city}
+              </p>
+              <p>
+                <strong>{t("admin.address")}:</strong>{" "}
+                {application.address || "-"}
+              </p>
+              <p>
+                <strong>{t("admin.ageGender")}:</strong>{" "}
+                {application.age || "-"} / {application.gender || "-"}
+              </p>
+              <p className="mb-0">
+                <strong>{t("admin.pincode")}:</strong>{" "}
+                {application.pincode || "-"}
+              </p>
+            </div>
+
+            <div className="col-md-6">
+              <h5 className="fw-bold mb-3">{t("admin.simranSection")}</h5>
+              <p>
+                <strong>{t("admin.copiesSubmitted")}:</strong>{" "}
+                {application.copies_submitted ?? "-"}
+              </p>
+              <p>
+                <strong>{t("admin.submittedCount")}:</strong>{" "}
+                {application.submitted_count ?? "-"}
+              </p>
+              <p>
+                <strong>{t("admin.submissionDate")}:</strong>{" "}
+                {application.submission_date || "-"}
+              </p>
+              <p>
+                <strong>{t("admin.notes")}:</strong> {application.notes || "-"}
+              </p>
+              <p>
+                <strong>{t("admin.verifiedCountLabel")}:</strong>{" "}
+                {application.verified_count ?? "-"}
+              </p>
+              <p className="mb-0">
+                <strong>{t("admin.tokensIssued")}:</strong>{" "}
+                {application.tokens_issued ?? "-"}
+              </p>
+            </div>
+          </div>
+
+          {canManage && (
+            <>
+              <hr className="my-4" />
+              <h5 className="fw-bold mb-3">{t("admin.verification")}</h5>
+
+              {application.status === "Accepted" && (
+                <div className="alert alert-success py-2">
+                  {t("admin.acceptedEditHint")}
+                </div>
+              )}
+
+              {application.status === "Rejected" && (
+                <div className="alert alert-danger py-2">
+                  {t("admin.rejectedEditHint")}
+                </div>
+              )}
+
+              <div className="row g-3 align-items-end">
+                <div className="col-md-4">
+                  <label className="form-label fw-semibold">
+                    {t("admin.verifiedCount")}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-control"
+                    value={verifiedCount}
+                    onChange={(e) => setVerifiedCount(e.target.value)}
+                  />
+                </div>
+                <div className="col-md-4">
+                  <div className="text-muted small">
+                    {t("admin.estimatedTokens")}
+                  </div>
+                  <div className="fs-3 fw-bold">{calculatedTokens}</div>
+                </div>
+              </div>
+
+              <div className="d-flex flex-wrap gap-2 mt-4">
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  disabled={updating}
+                  onClick={acceptApplication}
+                >
+                  {application.status === "Accepted"
+                    ? t("admin.saveChanges")
+                    : t("admin.accept")}
+                </button>
+
+                {application.status !== "Rejected" && (
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    disabled={updating}
+                    onClick={rejectApplication}
+                  >
+                    {t("admin.reject")}
+                  </button>
+                )}
+
+                {application.status === "Rejected" && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger"
+                    disabled={updating}
+                    onClick={rejectApplication}
+                  >
+                    {t("admin.updateRejectionReason")}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {!isEditMode &&
+            ["Pending Verification", "Accepted", "Rejected"].includes(
+              application.status
+            ) && (
+              <div className="alert alert-light border mt-4 mb-0">
+                {t("admin.viewModeHintPrefix")}{" "}
+                <button
+                  type="button"
+                  className="btn btn-link p-0 align-baseline"
+                  onClick={() => navigate(`/admin/applications/${id}/edit`)}
+                >
+                  {t("admin.edit")}
+                </button>{" "}
+                {t("admin.viewModeHintSuffix")}
+              </div>
+            )}
+
+          {application.status === "Registered" && (
+            <div className="alert alert-info mt-4 mb-0">
+              {t("admin.registeredOnlyHint")}
+            </div>
+          )}
+        </div>
+      </div>
+    </AdminLayout>
   );
 };
 

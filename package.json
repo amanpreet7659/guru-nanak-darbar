@@ -10,9 +10,12 @@
     "bcryptjs": "^3.0.3",
     "bootstrap": "^5.3.3",
     "concurrently": "^10.0.5",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.5.0",
+    "mongoose": "^9.9.3",
+    "nodemon": "^3.1.14",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.4",
     "react-dom": "^18.3.1",
@@ -25,13 +28,13 @@
   "scripts": {
     "start": "concurrently \"npm run client\" \"npm run api\"",
     "client": "react-scripts start",
-    "api": "vercel dev --listen 3001",
+    "api": "nodemon server/server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "seed:admin": "node scripts/seedAdmin.js"
   },
-  "proxy": "http://localhost:3001",
+  "proxy": "http://localhost:5000",
   "eslintConfig": {
     "extends": [
       "react-app",

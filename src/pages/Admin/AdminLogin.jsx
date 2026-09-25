@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import LanguageSwitcher from "../../components/LanguageSwitcher/LanguageSwitcher";
+import { useTranslation } from "../../i18n";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [form, setForm] = useState({
     username: "",
@@ -25,62 +28,53 @@ const AdminLogin = () => {
     if (!form.username.trim()) {
       Swal.fire({
         icon: "warning",
-        title: "Username Required",
-        text: "Please enter your username.",
+        title: t("admin.usernameRequired"),
+        text: t("admin.usernameRequiredText"),
       });
-
       return;
     }
 
     if (!form.password) {
       Swal.fire({
         icon: "warning",
-        title: "Password Required",
-        text: "Please enter your password.",
+        title: t("admin.passwordRequired"),
+        text: t("admin.passwordRequiredText"),
       });
-
       return;
     }
 
     try {
       setLoading(true);
 
-      const response = await fetch(
-        "/api/admin/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(form),
-        }
-      );
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(form),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data?.message || "Login failed."
-        );
+        throw new Error(data?.message || t("admin.loginFailed"));
       }
 
       await Swal.fire({
         icon: "success",
-        title: "Login Successful",
-        text: "Welcome to Admin Panel.",
-        timer: 1200,
+        title: t("admin.loginSuccess"),
+        text: t("admin.welcomeAdmin"),
+        timer: 1000,
         showConfirmButton: false,
       });
 
-      navigate("/admin");
+      navigate("/admin", { replace: true });
     } catch (error) {
       Swal.fire({
         icon: "error",
-        title: "Login Failed",
-        text:
-          error?.message ||
-          "Invalid username or password.",
+        title: t("admin.loginFailed"),
+        text: error?.message || t("admin.invalidCreds"),
       });
     } finally {
       setLoading(false);
@@ -95,8 +89,13 @@ const AdminLogin = () => {
         alignItems: "center",
         justifyContent: "center",
         background: "#f5f7fb",
+        position: "relative",
       }}
     >
+      <div style={{ position: "absolute", top: 20, right: 20 }}>
+        <LanguageSwitcher variant="light" />
+      </div>
+
       <form
         onSubmit={handleSubmit}
         style={{
@@ -105,17 +104,11 @@ const AdminLogin = () => {
           background: "#fff",
           padding: "35px",
           borderRadius: "12px",
-          boxShadow:
-            "0 10px 30px rgba(0,0,0,0.08)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
         }}
       >
-        <h2
-          style={{
-            textAlign: "center",
-            marginBottom: "10px",
-          }}
-        >
-          Admin Login
+        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+          {t("admin.loginTitle")}
         </h2>
 
         <p
@@ -125,18 +118,17 @@ const AdminLogin = () => {
             marginBottom: "30px",
           }}
         >
-          Sikh Virsa Sambhal Sabha
+          {t("admin.orgName")}
         </p>
 
         <div style={{ marginBottom: "20px" }}>
-          <label>Username / Email</label>
-
+          <label>{t("admin.usernameEmail")}</label>
           <input
             type="text"
             name="username"
             value={form.username}
             onChange={handleChange}
-            placeholder="Enter username"
+            placeholder={t("admin.enterUsername")}
             style={{
               width: "100%",
               padding: "12px",
@@ -147,14 +139,13 @@ const AdminLogin = () => {
         </div>
 
         <div style={{ marginBottom: "25px" }}>
-          <label>Password</label>
-
+          <label>{t("admin.password")}</label>
           <input
             type="password"
             name="password"
             value={form.password}
             onChange={handleChange}
-            placeholder="Enter password"
+            placeholder={t("admin.enterPassword")}
             style={{
               width: "100%",
               padding: "12px",
@@ -174,12 +165,32 @@ const AdminLogin = () => {
             borderRadius: "6px",
             background: "#1f3c68",
             color: "#fff",
-            cursor: loading
-              ? "not-allowed"
-              : "pointer",
+            cursor: loading ? "not-allowed" : "pointer",
           }}
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? t("admin.loggingIn") : t("admin.login")}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          style={{
+            width: "100%",
+            marginTop: "12px",
+            padding: "12px",
+            border: "1px solid #d0d7e2",
+            borderRadius: "6px",
+            background: "#fff",
+            color: "#1f3c68",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          <i className="bi bi-arrow-left" aria-hidden="true" />
+          {t("admin.backToHome")}
         </button>
       </form>
     </div>

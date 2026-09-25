@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { useTranslation } from "../../i18n";
 
 const ProtectedAdminRoute = ({ children }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] =
-    useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        const response = await fetch(
-          "/api/admin/me",
-          {
-            credentials: "include",
-          }
-        );
+        const response = await fetch("/api/admin/me", {
+          credentials: "include",
+        });
 
         setAuthenticated(response.ok);
       } catch (error) {
@@ -37,7 +35,7 @@ const ProtectedAdminRoute = ({ children }) => {
           justifyContent: "center",
         }}
       >
-        Checking authentication...
+        {t("admin.checkingAuth")}
       </div>
     );
   }

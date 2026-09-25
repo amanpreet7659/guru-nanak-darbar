@@ -5,13 +5,15 @@ import mail_icon from "../../assets/mail-icon.png";
 import phone_icon from "../../assets/phone-icon.png";
 import location_icon from "../../assets/location-icon.png";
 import white_arrow from "../../assets/white-arrow.png";
+import { useTranslation } from "../../i18n";
 
 const Contact = () => {
+  const { t } = useTranslation();
   const [result, setResult] = React.useState("");
 
   const onSubmit = async (event) => {
     event.preventDefault();
-    setResult("Sending....");
+    setResult(t("contact.sending"));
     const formData = new FormData(event.target);
 
     formData.append("access_key", "fd626018-d121-4f8b-a4fc-ebb5f53a1e33");
@@ -24,21 +26,21 @@ const Contact = () => {
     const data = await response.json();
 
     if (data.success) {
-      setResult("Form Submitted Successfully");
+      setResult(t("contact.submitted"));
       event.target.reset();
     } else {
       console.log("Error", data);
       setResult(data.message);
     }
   };
+
   return (
     <div className="contact">
       <div className="contact-col">
-        <h3>Send us Message <img src={msg_icon} alt="" /></h3>
-        <p>A place of faith, seva, and togetherness. Our Gurdwara
-          Sahib welcomes everyone with love, equality, and respect, while
-          sharing the timeless teachings of Gurbani and the values of Sikhism.
-        </p>
+        <h3>
+          {t("contact.sendMessage")} <img src={msg_icon} alt="" />
+        </h3>
+        <p>{t("contact.intro")}</p>
         <ul>
           <li>
             <img src={mail_icon} alt="" />
@@ -49,7 +51,7 @@ const Contact = () => {
             9855273953
           </li>
           <li>
-             <img src={location_icon} alt="" />
+            <img src={location_icon} alt="" />
             Vill. Barwali Kalan, PO. Barwali Khurd, Dist. Fatehgarh Sahib,
             Punjab, 141411
           </li>
@@ -57,29 +59,29 @@ const Contact = () => {
       </div>
       <div className="contact-col">
         <form onSubmit={onSubmit}>
-          <label>Your name</label>
+          <label>{t("contact.yourName")}</label>
           <input
             type="text"
             name="name"
-            placeholder="Enter your Name"
+            placeholder={t("contact.enterName")}
             required
           />
-          <label>Phone Number</label>
+          <label>{t("contact.phoneNumber")}</label>
           <input
             type="tel"
             name="phone"
-            placeholder="Enter your phone number"
+            placeholder={t("contact.enterPhone")}
             required
           />
-          <label> Write Your Messages here</label>
+          <label>{t("contact.writeMessage")}</label>
           <textarea
             name="message"
             rows="6"
-            placeholder=" Enter Your Message"
+            placeholder={t("contact.enterMessage")}
             required
           ></textarea>
           <button type="submit" className="actionbtn dark-actionbtn">
-            Submit now <img src={white_arrow} alt="" />
+            {t("common.submit")} <img src={white_arrow} alt="" />
           </button>
         </form>
         <span>{result}</span>

@@ -1,0 +1,55 @@
+.lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lang-switcher__btn {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  min-width: 36px;
+  opacity: 0.7;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.lang-switcher__btn.is-active {
+  background: rgba(255, 255, 255, 0.22);
+  opacity: 1;
+}
+
+.lang-switcher--light {
+  border-color: #d0d7e2;
+  background: #fff;
+  color: #1f3c68;
+}
+
+.lang-switcher--light .lang-switcher__btn.is-active {
+  background: #1f3c68;
+  color: #fff;
+}
+
+.lang-switcher--admin {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+.lang-switcher--form {
+  border-color: #d0d7e2;
+  background: #f8fafc;
+  color: #071a41;
+}
+
+.lang-switcher--form .lang-switcher__btn.is-active {
+  background: #071a41;
+  color: #fff;
+}
